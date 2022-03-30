@@ -1,0 +1,128 @@
+---
+title: "thesis"
+author: "sylvie"
+date: "3/14/2022"
+output: html_document
+---
+
+```{r packages}
+setwd("~/Library/CloudStorage/OneDrive-PennO365/school/spring2022/deesis/data")
+#packages
+knitr::opts_chunk$set(echo = TRUE)
+library(plyr)
+library(magrittr)
+library(dplyr)
+library(tidyr)
+library(lubridate)
+library(haven)
+library(data.table)
+library(readxl)
+library(stringr)
+library(ggplot2)
+library(tidyverse)
+library(ggrepel)
+library(ggpubr)
+library(gridExtra)
+library(grid)
+library(ggplot2)
+library(lattice)
+library(ggpubr)
+library(readr)
+```
+
+
+```{r jail population data}
+jail_population <- read_csv("data/jail_population.csv")
+names(jail_population)
+#make the dates into lubridate format
+jail_population$date <- mdy(jail_population$date)
+jail_population$week <- week(jail_population$date)
+jail_population$year <- year(jail_population$date)
+jail_population$month <- month(jail_population$date)
+jail_population$week_month_year <- paste(jail_population$week, jail_population$month, jail_population$year, sep="_")
+#there aren't 53 weeks in a year
+#make the 53rd part of the first of the next year, for ease of measurement
+jail_population$week_month_year <- gsub("(^53_12_202)(1|2)", "1_1\\2", jail_population$week_month_year)
+
+#a list of all weeks, so I can number each week accordingly in the working dataset
+all_weeks <- data.frame(week_month_year = unique(jail_population$week_month_year))
+all_weeks$n <- c(1:nrow(all_weeks))
+
+i <- match(jail_population$week_month_year, all_weeks$week_month_year)
+jail_population$n <- all_weeks$n[i]
+```
+
+```{r merge in cbsa statistical area}
+
+CBSAtoFIPS <- read_csv("~/Library/CloudStorage/OneDrive-PennO365/school/spring2022/deesis/data/CBSAtoFIPS.csv")
+CBSAtoFIPS$fips <- with(CBSAtoFIPS, paste(fipsstatecode, fipscountycode, sep=""))
+#get rid of the first 0
+CBSAtoFIPS$fips <- gsub("^0(.*)", "\\1", CBSAtoFIPS$fips)
+#only metropolitan, not micropolitan
+CBSAtoFIPS <- subset(CBSAtoFIPS, metropolitanmicropolitanstatis=="Metropolitan Statistical Area")
+i <- match(jail_population$fips, CBSAtoFIPS$fips)
+jail_population$cbsacode <- CBSAtoFIPS$cbsacode[i]
+jail_population$cbsatitle <- CBSAtoFIPS$cbsatitle[i]
+i <- aggregate(resident_population~cbsacode, data=jail_population, FUN=max)
+i <- i[order(-i$resident_population),]
+i <- i[which(i$resident_population > 1000000),]
+
+
+```
+create dataset with variables that i need: 
+date
+n
+cbsacode
+cbsatitle
+fips
+county_name
+state_name
+resident_population
+jail_population
+county_name
+urbanicity
+reporting_jurisdictions
+jail_incarceration_rate_per_100k
+
+```{r create working dataset}
+jail_working <- jail_population %>% 
+  subset(resident_population > 1000000) %>% 
+    select(date,n,week_month_year,cbsacode,cbsatitle,fips,county_name,state_name,
+           resident_population,jail_population,county_name,urbanicity,
+           reporting_jurisdictions,jail_incarceration_rate_per_100k) %>% 
+        group_by(cbsacode, n) %>% 
+        summarise(fips = fips,
+                  state_name = state_name,
+                  cbsacode = cbsacode,
+                  cbsatitle = cbsatitle,
+                  date = date,
+                  urban = urbanicity,
+                  jail_pop = mean(jail_population),
+                  res_pop = mean(resident_population),
+                  percapita_jail = mean(jail_incarceration_rate_per_100k),
+                  reporting = reporting_jurisdictions) 
+
+
+#good stopping point: now all you need to do is take the first observation from each week-grouping
+#so i guess every seventh observation
+
+
+
+```
+
+```{r demographic data}
+#only include the fips that are in the Vera dataset
+
+voteshare <- read_csv("data/countypres_2000-2020.csv")
+i <- which(voteshare$year==2020)
+voteshare <- voteshare[i,]
+i <- unique()
+
+```
+
+```{r merge data}
+
+
+```
+
+
