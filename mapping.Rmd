@@ -1,0 +1,35 @@
+---
+title: "mapping"
+output: html_notebook
+---
+
+```{r mapping!}
+library(sf)
+library(jsonlite)
+
+#load shapefile
+
+
+states <- st_read("~/Library/CloudStorage/OneDrive-PennO365/school/spring2022/deesis/senior_thesis/data/geography/cb_2018_us_state_500k/cb_2018_us_state_500k.shp")
+states <- subset(states, !(NAME  %in% c("Guam", "Commonwealth of the Northern Mariana Islands","American Samoa","United States Virgin Islands",
+                                       "Hawaii","Alaska", "Puerto Rico")))
+
+
+MSAs <- st_read("~/Library/CloudStorage/OneDrive-PennO365/school/spring2022/deesis/senior_thesis/data/geography/cb_2018_us_cbsa_500k/cb_2018_us_cbsa_500k.shp")  
+MSAs <- subset(MSAs, CBSAFP %in% list_of_jails_cbsas$cbsacode)
+
+i <- plot(st_geometry(states), col="grey") + plot(st_geometry(MSAs), col="blue",add=TRUE)
+
+p<- ggplot(data = states, color="black") +
+  geom_sf() +
+  geom_sf(data=MSAs, color = "black", fill="lightblue") +
+  theme_void() 
+
+
+
+
+```
+
+```{r more mapping}
+
+```

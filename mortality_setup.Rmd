@@ -1,0 +1,50 @@
+---
+title: "mortality data"
+output: html_notebook
+---
+
+```{r}
+#packages
+knitr::opts_chunk$set(echo = TRUE)
+library(plyr)
+library(magrittr)
+library(dplyr)
+library(tidyr)
+library(lubridate)
+library(haven)
+library(data.table)
+library(readxl)
+library(stringr)
+library(ggplot2)
+library(tidyverse)
+library(ggrepel)
+library(ggpubr)
+library(gridExtra)
+library(grid)
+library(ggplot2)
+library(lattice)
+library(ggpubr)
+library(readr)
+library(stringr)
+```
+
+```{r HHS region 1, 2018-now}
+hhs_r1_2018_now <- read_csv("data/mortality/hhs_r1_2018-now.csv")
+#change names
+names(hhs_r1_2018_now) <- gsub(" ","_", names(hhs_r1_2018_now))
+
+#create a date/week variable
+
+hhs_r1_2018_now$date <- gsub(".*ending (.*)", "\\1", hhs_r1_2018_now$MMWR_Week)
+hhs_r1_2018_now$date <- gsub("\\(provisional\\)", "", hhs_r1_2018_now$date)
+hhs_r1_2018_now$date <- mdy(hhs_r1_2018_now$date)
+#no total rows to worry about
+grep("total", hhs_r1_2018_now)
+
+
+#only keep the years we care about
+i <- with(hhs_r1_2018_now, which(year(date) > 2018 & year(date) < 2022))
+hhs_r1_2019_2021 <- hhs_r1_2018_now[i,]
+
+
+```
